@@ -8,11 +8,19 @@ import java.util.regex.Pattern;
 
 // You should **not** update any call signatures in this file
 // only modify the body of each function
+
+/**
+ * The Conversation class represents interaction between a chatbot and user input.
+ * 
+ * Conversations gather and store Strings in a transcript. The Strings are gathered
+ * in an interaction between the program and a user, where the program responds to the user
+ * for a number of rounds provided by the user.
+ */
+
 class Conversation implements ConversationRequirements {
 
-  /**
-   * Attributes
-   */
+  // ATTRIBUTES: //
+
   // A record of what is said in the conversation
   ArrayList<String> transcript;
 
@@ -57,7 +65,7 @@ class Conversation implements ConversationRequirements {
       "Interesting!",
       "Huh.",
       "Really?",
-      "Please, continue."
+      "Uh-huh."
     };
 
     this.mirror_words = Map.ofEntries(
@@ -89,6 +97,8 @@ class Conversation implements ConversationRequirements {
    * Starts and runs the conversation with the user
    */
   public void chat() {
+    // NOTE: if called more than once, will append the second transcript to the first.
+
     // Initializes a Random object for general randomization
     Random random = new Random();
 
@@ -142,12 +152,13 @@ class Conversation implements ConversationRequirements {
     Random random = new Random();
     this.matcher.reset(inputString);
 
-    String returnString = this.matcher.replaceAll(found_word -> match(found_word.group().toLowerCase())); 
+    String returnString = this.matcher.replaceAll(found_word -> match(found_word.group())); 
     if (returnString.equals(inputString)) {
-      return this.canned_responses[random.nextInt(this.canned_responses.length-1)];
+      return this.canned_responses[random.nextInt(this.canned_responses.length)];
     }
 
     // Controls end punctuation
+    returnString = returnString.trim();
     if (returnString.endsWith(".") || returnString.endsWith("!")) {
       return returnString.substring(0, returnString.length()-1) + "?";
     } else if (returnString.endsWith("?")) {
@@ -163,16 +174,30 @@ class Conversation implements ConversationRequirements {
    * @return String that is associated with the key/value of match
    */
   private String match(String match) {
-    System.out.println("Matched!");
-    if (this.mirror_words.containsValue(match)) {
+    String lower_match = match.toLowerCase();
+    if (this.mirror_words.containsValue(lower_match)) {
       for (String key : this.mirror_words.keySet()) {
-        if (this.mirror_words.get(key).equals(match)) {
+        if (this.mirror_words.get(key).equals(lower_match)) {
+
+          // To account for the consistant capitalization of "I"
+          if (key.equals("i")) {
+            return key.toUpperCase();
+          // If the first letter of match is capitalized
+          } 
+          if (match.charAt(0) != lower_match.charAt(0)) {
+            return key.substring(0, 1).toUpperCase() + key.substring(1);
+          }
           return key;
         }
       }
-    } else if (this.mirror_words.containsKey(match)) {
-      return this.mirror_words.get(match);
+    } else if (this.mirror_words.containsKey(lower_match)) {
+      // If the first character of match is capitalized
+      if (lower_match.charAt(0) != match.charAt(0)) {
+        return this.mirror_words.get(lower_match).substring(0, 1).toUpperCase() + this.mirror_words.get(lower_match).substring(1);
+      }
+      return this.mirror_words.get(lower_match);
     }
+
     return match;
   }
 
